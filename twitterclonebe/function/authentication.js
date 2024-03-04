@@ -1,23 +1,50 @@
 const { User } = require("../models/User");
 const mongoose = require("mongoose");
+const bcrypt=require("bcryptjs");
 
-const login=(req,res)=>{
-    console.log(req.body)
-    res.send(req.body);
+//jwt use to validate user
+var jwt = require('jsonwebtoken');
+
+const login=async (req,res)=>{
+    const {email,password}=req.body;
+    const users=await User.find({email});
+    if(users.length==0)
+    {
+        return res.status(504).send("user not found")
+    }
+    let hashpwd=users[0].password;
+    let response=await bcrypt.compare(password,hashpwd)
+    if(response==true){
+        let data={id:users[0].id}
+        let signature="xyz"
+        let token=jwt.sign(data,signature)
+        return res.status(200).send({status:true,token});
+        //return res.status(200).send({...req.body,status:"login sucess"});
+    }
+    return res.status(504).send({status:false,message:"login failed"})
+    }
+    
+    
+const logout=async (req,res)=>{
+    res.status(200).send("logout");
 }
-const logout=(req,res)=>{
-    res.send("logout");
-}
-const signup=(req,res)=>{
+const signup=async (req,res)=>{
     const {name,email,password,cpassword}=req.body
 
-    const user = new User({name,email,password,cpassword});
-    user.save();
+    //generate bcrypt default salt
+    let salt=await bcrypt.genSalt()
+    //generating hashpassword
+    let hashPassword=await bcrypt.hash(password,salt);
 
-    console.log(name,email,password,cpassword)
-    res.send("signup");
+    const user = new User({name,email,password: hashPassword});
+    user.save();
+    
+    let data={id:user.id}
+    let signature="xyz"
+    let token=jwt.sign(data,signature)
+    res.status(200).send({status:true,token});
 }
 const forgatepwd=(req,res)=>{
-    res.send("forgatepwd");
+    res.status(200).send("forgatepwd");
 }
 module.exports={login,logout,signup,forgatepwd}

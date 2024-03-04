@@ -1,7 +1,7 @@
 const express=require('express')
 const {router}=require('./routes/router')
 const app=express();
-
+require("dotenv").config()
 
 const mongoose = require("mongoose");
 const {connectToMongo}=require('./db')
@@ -15,7 +15,8 @@ app.use(express.json());
 
 app.use(router)
 
-app.listen(3000,()=>{
+const PORT=process.env.PORT
+app.listen(PORT,()=>{
     console.log("i am running at port 3000")
 })
 
